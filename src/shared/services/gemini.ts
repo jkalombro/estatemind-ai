@@ -11,7 +11,7 @@ export async function generateChatResponse(
   const model = "gemini-3-flash-preview";
   
   const propertiesContext = properties.map(p => 
-    `Property: ${p.title}\nLocation: ${p.location}\nPrice: $${p.price}\nType: ${p.type}\nBedrooms: ${p.bedrooms}\nBathrooms: ${p.bathrooms}\nDescription: ${p.description}`
+    `Property: ${p.title}\nLocation: ${p.location}\nPrice: ${p.price}\nType: ${p.type}\nBedrooms: ${p.bedrooms}\nBathrooms: ${p.bathrooms}\nDescription: ${p.description}`
   ).join('\n\n');
 
   const faqsContext = faqs.map(f => 
@@ -31,6 +31,7 @@ export async function generateChatResponse(
     Guidelines:
     - Be professional, friendly, and helpful.
     - If a user asks about a property, provide details from the listings above.
+    - **CRITICAL**: Do NOT use the dollar sign ($) when mentioning prices. Just provide the number (e.g., "1,200,000" instead of "$1,200,000").
     - **CRITICAL**: After providing property details or answering a specific inquiry about a listing, you MUST politely ask for the user's name and contact information (email or phone) so the agent can follow up with them.
     - If you don't know the answer, suggest they contact the agent directly.
     - Use markdown for formatting (bolding, lists, etc.).

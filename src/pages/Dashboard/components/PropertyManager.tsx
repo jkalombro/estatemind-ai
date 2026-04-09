@@ -4,6 +4,7 @@ import { Building2, Plus, Trash2, Edit, Save, X, Search } from 'lucide-react';
 import { db, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from '../../../firebase';
 import { LoadingScreen } from './LoadingScreen';
 import { cn } from '../../../shared/utils/utils';
+import { ConfirmationModal } from '../../../shared/components/ConfirmationModal';
 
 export function PropertyManager() {
   const { user } = useAuth();
@@ -11,7 +12,21 @@ export function PropertyManager() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant: 'danger' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    variant: 'info'
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -56,19 +71,55 @@ export function PropertyManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this listing?")) {
-      await deleteDoc(doc(db, 'properties', id));
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Delete Listing',
+      message: 'Are you sure you want to delete this listing? This action cannot be undone.',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'properties', id));
+        } catch (error) {
+          console.error("Error deleting property:", error);
+        }
+      }
+    });
   };
 
   const handleMarkAsSold = async (id: string) => {
-    try {
-      await updateDoc(doc(db, 'properties', id), {
-        status: 'Sold'
-      });
-    } catch (error) {
-      console.error("Error marking property as sold:", error);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Mark as Sold',
+      message: 'Are you sure you want to mark this property as Sold?',
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          await updateDoc(doc(db, 'properties', id), {
+            status: 'Sold'
+          });
+        } catch (error) {
+          console.error("Error marking property as sold:", error);
+        }
+      }
+    });
+  };
+
+  const handleMarkAsForSale = async (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Mark as For Sale',
+      message: 'Are you sure you want to mark this property as For Sale?',
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          await updateDoc(doc(db, 'properties', id), {
+            status: 'For Sale'
+          });
+        } catch (error) {
+          console.error("Error marking property as for sale:", error);
+        }
+      }
+    });
   };
 
   const handleEdit = (property: any) => {
@@ -88,10 +139,12 @@ export function PropertyManager() {
 
   if (loading) return <LoadingScreen />;
 
-  const filteredProperties = properties.filter(property => 
-    property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    property.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProperties = properties.filter(property => {
+    const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         property.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || property.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
@@ -109,15 +162,30 @@ export function PropertyManager() {
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search properties by title or location..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
-        />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-48">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+          >
+            <option value="All">All Statuses</option>
+            <option value="For Sale">For Sale</option>
+            <option value="Sold">Sold</option>
+            <option value="For Rent">For Rent</option>
+            <option value="Rented">Rented</option>
+          </select>
+        </div>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search properties by title or location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+          />
+        </div>
       </div>
 
       {isAdding && (
@@ -240,7 +308,7 @@ export function PropertyManager() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredProperties.map((property) => (
-          <div key={property.id} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group">
+          <div key={property.id} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{property.title}</h3>
@@ -281,14 +349,23 @@ export function PropertyManager() {
             <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed mb-4">
               {property.description}
             </p>
-            {property.status !== 'Sold' && (
-              <button
-                onClick={() => handleMarkAsSold(property.id)}
-                className="w-full py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer"
-              >
-                Mark as Sold
-              </button>
-            )}
+            <div className="mt-auto">
+              {property.status !== 'Sold' ? (
+                <button
+                  onClick={() => handleMarkAsSold(property.id)}
+                  className="w-full py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer"
+                >
+                  Mark as Sold
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleMarkAsForSale(property.id)}
+                  className="w-full py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all cursor-pointer"
+                >
+                  Mark as For Sale
+                </button>
+              )}
+            </div>
           </div>
         ))}
         {filteredProperties.length === 0 && !isAdding && (
@@ -300,6 +377,15 @@ export function PropertyManager() {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        variant={confirmConfig.variant}
+      />
     </div>
   );
 }
