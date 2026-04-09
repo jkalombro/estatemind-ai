@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth, signInWithPopup, googleProvider, signOut } from './firebase';
 import { useAuth } from './App';
-import { LogIn, LogOut, Home, Settings, MessageSquare, Building2, Sun, Moon, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, Home, Settings, MessageSquare, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { cn } from './shared/utils/utils';
 import { useTheme } from './shared/context/ThemeContext';
+import logo from './assets/img/estatemind-ai.png';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth();
@@ -44,9 +45,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="bg-blue-600 p-2 rounded-lg group-hover:bg-blue-700 transition-colors">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
+              <img 
+                src={logo} 
+                alt="EstateMind AI" 
+                className="w-10 h-10 rounded-lg object-contain" 
+                referrerPolicy="no-referrer"
+              />
               <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">EstateMind AI</span>
             </Link>
 
