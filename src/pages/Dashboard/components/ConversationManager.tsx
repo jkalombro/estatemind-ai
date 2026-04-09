@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../App';
 import { MessageSquare, Trash2, X, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { db, collection, query, where, onSnapshot, deleteDoc, doc, getDocs } from '../../../firebase';
 import { cn } from '../../../shared/utils/utils';
 import { motion } from 'motion/react';
@@ -177,7 +178,9 @@ export function ConversationManager() {
                       <div className="font-bold text-[10px] uppercase tracking-wider mb-1 opacity-50">
                         {msg.sender === 'user' ? 'Client' : 'AI Assistant'}
                       </div>
-                      {msg.text}
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-strong:font-bold">
+                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      </div>
                       <div className="text-[10px] mt-1 opacity-50 text-right">
                         {new Date(msg.createdAt).toLocaleTimeString()}
                       </div>
