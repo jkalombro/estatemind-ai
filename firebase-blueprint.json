@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "A real estate property listing.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the property listing." },
+        "description": { "type": "string", "description": "A detailed description of the property." },
+        "price": { "type": "number", "description": "The price of the property." },
+        "location": { "type": "string", "description": "The location/address of the property." },
+        "type": { "type": "string", "enum": ["House", "Apartment", "Condo", "Land"], "description": "The type of property." },
+        "bedrooms": { "type": "number", "description": "Number of bedrooms." },
+        "bathrooms": { "type": "number", "description": "Number of bathrooms." },
+        "agentId": { "type": "string", "description": "The UID of the agent who owns this listing." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the listing was created." }
+      },
+      "required": ["title", "price", "location", "agentId"]
+    },
+    "FAQ": {
+      "title": "FAQ",
+      "description": "Frequently asked questions for the real estate agency.",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string", "description": "The question text." },
+        "answer": { "type": "string", "description": "The answer text." },
+        "agentId": { "type": "string", "description": "The UID of the agent who owns this FAQ." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the FAQ was created." }
+      },
+      "required": ["question", "answer", "agentId"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Chatbot and agency settings.",
+      "type": "object",
+      "properties": {
+        "chatbotName": { "type": "string", "description": "The name of the AI chatbot." },
+        "chatbotAvatarUrl": { "type": "string", "description": "The URL for the chatbot's profile picture." },
+        "welcomeMessage": { "type": "string", "description": "The initial message from the chatbot." },
+        "agencyName": { "type": "string", "description": "The name of the real estate agency." },
+        "agentId": { "type": "string", "description": "The UID of the agent." }
+      },
+      "required": ["agentId"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "A chat session between a client and the AI.",
+      "type": "object",
+      "properties": {
+        "agentId": { "type": "string", "description": "The UID of the agent." },
+        "clientName": { "type": "string", "description": "The name of the client (if provided)." },
+        "contactInfo": { "type": "string", "description": "Contact info of the client (if provided)." },
+        "lastMessage": { "type": "string", "description": "The last message in the conversation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last activity timestamp." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the conversation started." }
+      },
+      "required": ["agentId", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A single message in a conversation.",
+      "type": "object",
+      "properties": {
+        "conversationId": { "type": "string", "description": "The ID of the conversation." },
+        "agentId": { "type": "string", "description": "The UID of the agent." },
+        "text": { "type": "string", "description": "The message text." },
+        "sender": { "type": "string", "enum": ["user", "bot"], "description": "Who sent the message." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["conversationId", "agentId", "text", "sender", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the application (Agent or Admin).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "role": { "type": "string", "enum": ["agent", "admin"], "description": "The user's role." },
+        "isBlocked": { "type": "boolean", "description": "Whether the user is blocked from accessing the application." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user account was created." }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "User", "description": "Collection of user profiles." },
+    "properties": { "schema": "Property", "description": "Collection of property listings." },
+    "faqs": { "schema": "FAQ", "description": "Collection of frequently asked questions." },
+    "settings": { "schema": "Settings", "description": "Agent-specific settings." },
+    "conversations": { "schema": "Conversation", "description": "Collection of chat sessions." },
+    "messages": { "schema": "ChatMessage", "description": "Collection of all chat messages." }
+  }
+}

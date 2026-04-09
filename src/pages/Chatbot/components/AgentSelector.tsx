@@ -1,0 +1,62 @@
+import { Building2, Sparkles } from 'lucide-react';
+import { cn } from '../../../shared/utils/utils';
+
+interface Agent {
+  id: string;
+  agencyName?: string;
+  chatbotName?: string;
+}
+
+interface AgentSelectorProps {
+  agents: Agent[];
+  selectedAgent: string | null;
+  onSelectAgent: (id: string) => void;
+  urlAgentId: string | null;
+}
+
+export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId }: AgentSelectorProps) {
+  if (urlAgentId) return null;
+
+  return (
+    <div className="w-full md:w-72 flex flex-col gap-4">
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
+        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          Select Agency
+        </h2>
+        <div className="space-y-2 max-h-48 md:max-h-none overflow-y-auto pr-2">
+          {agents.map((agent) => (
+            <button
+              key={agent.id}
+              onClick={() => onSelectAgent(agent.id)}
+              className={cn(
+                "w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border cursor-pointer",
+                selectedAgent === agent.id
+                  ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-sm"
+                  : "bg-white dark:bg-gray-900 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
+              )}
+            >
+              {agent.agencyName || "Unnamed Agency"}
+              <div className="text-[10px] opacity-60 font-normal mt-0.5">
+                AI: {agent.chatbotName}
+              </div>
+            </button>
+          ))}
+          {agents.length === 0 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic p-2">No active agencies found.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-blue-600 p-5 rounded-2xl text-white shadow-lg shadow-blue-100 dark:shadow-none hidden md:block">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-5 h-5" />
+          <h3 className="font-bold">AI Powered</h3>
+        </div>
+        <p className="text-sm text-blue-100 leading-relaxed">
+          Our AI is trained on real-time property data and agency FAQs to provide instant, accurate information.
+        </p>
+      </div>
+    </div>
+  );
+}

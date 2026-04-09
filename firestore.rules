@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: properties
+    // Fields: title, description, price, location, type, bedrooms, bathrooms, agentId, createdAt
+    //
+    // Collection: faqs
+    // Fields: question, answer, agentId, createdAt
+    //
+    // Collection: settings
+    // Fields: chatbotName, welcomeMessage, agencyName, agentId
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "jkninja238@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isNotBlocked() {
+      return !get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBlocked;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && (request.auth.uid == resource.data.agentId || isAdmin());
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.email is string &&
+             data.role in ['agent', 'admin'] &&
+             (!('isBlocked' in data) || data.isBlocked is bool);
+    }
+
+    function isValidProperty(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.price is number && data.price >= 0 &&
+             data.location is string && data.location.size() > 0 &&
+             (data.agentId == request.auth.uid || isAdmin());
+    }
+
+    function isValidFAQ(data) {
+      return data.question is string && data.question.size() > 0 && data.question.size() < 500 &&
+             data.answer is string && data.answer.size() > 0 && data.answer.size() < 2000 &&
+             (data.agentId == request.auth.uid || isAdmin());
+    }
+
+    function isValidSettings(data) {
+      return data.agentId == request.auth.uid || isAdmin();
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /properties/{propertyId} {
+      allow read: if true; // Publicly readable for the chatbot
+      allow create: if isAuthenticated() && isNotBlocked() && isValidProperty(request.resource.data);
+      allow update: if isDocOwner() && isNotBlocked() && isValidProperty(request.resource.data);
+      allow delete: if isDocOwner() && isNotBlocked();
+    }
+
+    match /faqs/{faqId} {
+      allow read: if true; // Publicly readable for the chatbot
+      allow create: if isAuthenticated() && isNotBlocked() && isValidFAQ(request.resource.data);
+      allow update: if isDocOwner() && isNotBlocked() && isValidFAQ(request.resource.data);
+      allow delete: if isDocOwner() && isNotBlocked();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if (isOwner(settingId) && isNotBlocked()) || isAdmin();
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if isAdmin() || (isAuthenticated() && isNotBlocked() && (resource == null || resource.data.agentId == request.auth.uid));
+      allow create: if true;
+      allow update: if isAdmin() || (isAuthenticated() && isNotBlocked() && resource.data.agentId == request.auth.uid) || true; // Allow bot to update client info
+      allow delete: if isDocOwner() && isNotBlocked();
+    }
+
+    match /messages/{messageId} {
+      allow read, delete: if isAdmin() || (isAuthenticated() && isNotBlocked() && resource.data.agentId == request.auth.uid);
+      allow create: if true;
+    }
+    
+    match /_connection_test/{testId} {
+      allow read: if true;
+    }
+  }
+}
