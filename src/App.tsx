@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { auth, onAuthStateChanged, User, signInWithPopup, googleProvider, signOut, db, doc, getDoc, setDoc, serverTimestamp } from './firebase';
 import { Layout } from './Layout';
@@ -6,6 +6,7 @@ import { Admin } from './pages/Admin/AdminPage';
 import { Dashboard } from './pages/Dashboard/DashboardPage';
 import { Chatbot } from './pages/Chatbot/ChatbotPage';
 import { Home } from './pages/Home/HomePage';
+import { NotFound } from './pages/NotFound';
 import { LogIn, LogOut, Home as HomeIcon, Settings, MessageSquare, LayoutDashboard, ShieldAlert } from 'lucide-react';
 import { ThemeProvider } from './shared/context/ThemeContext';
 
@@ -123,6 +124,7 @@ export default function App() {
               <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/admin/*" element={<Admin />} />
               <Route path="/chatbot" element={<Chatbot />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
         </Router>
