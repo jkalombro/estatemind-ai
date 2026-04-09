@@ -114,8 +114,8 @@ export default function App() {
   const isBlocked = !!profile?.isBlocked;
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isBlocked }}>
-      <ThemeProvider>
+    <ThemeProvider>
+      <AuthContext.Provider value={{ user, profile, loading, isAdmin, isBlocked }}>
         <Router>
           <Layout>
             <Routes>
@@ -126,7 +126,7 @@ export default function App() {
             </Routes>
           </Layout>
         </Router>
-      </ThemeProvider>
-    </AuthContext.Provider>
+      </AuthContext.Provider>
+    </ThemeProvider>
   );
 }
