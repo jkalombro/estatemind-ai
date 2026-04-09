@@ -56,7 +56,8 @@ export function Overview() {
     };
   }, [user]);
 
-  const chatbotUrl = `${window.location.origin}/chatbot?agentId=${user?.uid}`;
+  const baseUrl = window.location.href.split('#')[0];
+  const chatbotUrl = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}#/chatbot?agentId=${user?.uid}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(chatbotUrl);

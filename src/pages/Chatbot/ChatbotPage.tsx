@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { db, collection, getDocs, query, where, onSnapshot, doc, getDoc, addDoc, updateDoc } from '../../firebase';
 import { generateChatResponse } from '../../shared/services/gemini';
+import { Info, X } from 'lucide-react';
 
 import { AgentSelector } from './components/AgentSelector';
 import { ChatHeader } from './components/ChatHeader';
@@ -29,6 +30,7 @@ export function Chatbot() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [agentNotFound, setAgentNotFound] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch all agents who have set up the app
@@ -42,7 +44,14 @@ export function Chatbot() {
         
         // If agentId is in URL, prioritize it
         if (urlAgentId) {
-          setSelectedAgent(urlAgentId);
+          const exists = agentList.some(a => a.id === urlAgentId);
+          if (exists) {
+            setSelectedAgent(urlAgentId);
+          } else {
+            console.warn("Agent ID from URL not found in settings collection:", urlAgentId);
+            setAgentNotFound(true);
+            if (agentList.length > 0) setSelectedAgent(agentList[0].id);
+          }
         } else if (agentList.length > 0) {
           setSelectedAgent(agentList[0].id);
         }
@@ -212,6 +221,20 @@ export function Chatbot() {
 
   return (
     <div className="max-w-5xl mx-auto h-[calc(100vh-12rem)] flex flex-col md:flex-row gap-6">
+      {agentNotFound && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+            <Info className="w-5 h-5" />
+          </div>
+          <div className="text-sm">
+            <p className="font-bold text-amber-900 dark:text-amber-200">Agency Not Found</p>
+            <p className="text-amber-700 dark:text-amber-400">The requested agency link is invalid. Showing default agency instead.</p>
+          </div>
+          <button onClick={() => setAgentNotFound(false)} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors">
+            <X className="w-4 h-4 text-amber-500" />
+          </button>
+        </div>
+      )}
       <AgentSelector 
         agents={agents} 
         selectedAgent={selectedAgent} 

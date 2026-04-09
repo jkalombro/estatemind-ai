@@ -101,13 +101,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={handleLogin}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md active:scale-95"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span className="font-medium">Agent Login</span>
-                </button>
+                !(location.pathname === '/chatbot' && new URLSearchParams(location.search).has('agentId')) && (
+                  <button
+                    onClick={handleLogin}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span className="font-medium">Agent Login</span>
+                  </button>
+                )
               )}
             </div>
           </div>
