@@ -138,7 +138,7 @@ export function Overview() {
                 {settings?.chatbotName || 'EstateMind AI'}
               </h4>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Managed by <span className="font-medium text-blue-600 dark:text-blue-400">{settings?.agencyName || user?.displayName || 'Agent'}</span>
+                Managed by <span className="font-medium text-blue-600 dark:text-blue-400">{user?.displayName || 'Agent'}</span>
               </p>
             </div>
           </div>

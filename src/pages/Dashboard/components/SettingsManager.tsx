@@ -9,8 +9,7 @@ export function SettingsManager() {
   const [settings, setSettings] = useState({
     chatbotName: 'EstateMind AI',
     chatbotAvatarUrl: '',
-    welcomeMessage: 'Hello! How can I help you with your real estate needs today?',
-    agencyName: ''
+    welcomeMessage: 'Hello! How can I help you with your real estate needs today?'
   });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,8 +24,7 @@ export function SettingsManager() {
         setSettings({
           chatbotName: data.chatbotName || 'EstateMind AI',
           chatbotAvatarUrl: data.chatbotAvatarUrl || '',
-          welcomeMessage: data.welcomeMessage || 'Hello! How can I help you with your real estate needs today?',
-          agencyName: data.agencyName || ''
+          welcomeMessage: data.welcomeMessage || 'Hello! How can I help you with your real estate needs today?'
         });
       }
       setLoading(false);
@@ -61,16 +59,6 @@ export function SettingsManager() {
       </div>
 
       <form onSubmit={handleSave} className="bg-white dark:bg-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-6 transition-colors">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Agent / Business Name</label>
-          <input
-            type="text"
-            value={settings.agencyName}
-            onChange={e => setSettings({ ...settings, agencyName: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-            placeholder="John Doe Real Estate"
-          />
-        </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Chatbot Name</label>
           <input

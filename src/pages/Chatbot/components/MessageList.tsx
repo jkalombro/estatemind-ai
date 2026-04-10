@@ -8,6 +8,7 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
 }
 
 interface MessageListProps {
@@ -59,16 +60,25 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
                 ? "bg-blue-600 text-white rounded-tr-none" 
                 : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-none"
             )}>
-              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-inherit prose-p:leading-relaxed prose-strong:text-inherit">
+              <div className={cn(
+                "prose prose-sm max-w-none prose-headings:text-inherit prose-p:leading-relaxed prose-strong:text-inherit",
+                msg.sender === 'user' ? "prose-invert" : "dark:prose-invert"
+              )}>
                 <Markdown>
                   {msg.text}
                 </Markdown>
               </div>
               <div className={cn(
-                "text-[10px] mt-2 opacity-50",
-                msg.sender === 'user' ? "text-right" : ""
+                "text-[10px] mt-2 opacity-70 flex items-center gap-2",
+                msg.sender === 'user' ? "justify-end" : ""
               )}>
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                {msg.sender === 'user' && msg.status === 'sending' && (
+                  <span className="italic animate-pulse">Sending...</span>
+                )}
+                {msg.sender === 'user' && msg.status === 'error' && (
+                  <span className="text-red-200">Failed to send</span>
+                )}
               </div>
             </div>
           </motion.div>
