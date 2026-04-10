@@ -227,8 +227,8 @@ export function Chatbot() {
             <Info className="w-5 h-5" />
           </div>
           <div className="text-sm">
-            <p className="font-bold text-amber-900 dark:text-amber-200">Agency Not Found</p>
-            <p className="text-amber-700 dark:text-amber-400">The requested agency link is invalid. Showing default agency instead.</p>
+            <p className="font-bold text-amber-900 dark:text-amber-200">Agent Not Found</p>
+            <p className="text-amber-700 dark:text-amber-400">The requested agent link is invalid. Showing default agent instead.</p>
           </div>
           <button onClick={() => setAgentNotFound(false)} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors">
             <X className="w-4 h-4 text-amber-500" />

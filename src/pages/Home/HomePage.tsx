@@ -32,7 +32,7 @@ export function Home() {
     },
     {
       title: "FAQ Database",
-      description: "Build a knowledge base for your agency to handle routine queries.",
+      description: "Build a knowledge base for your business to handle routine queries.",
       icon: ShieldCheck,
       color: "bg-purple-500"
     }
@@ -119,7 +119,7 @@ export function Home() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="space-y-6 max-w-xl">
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-              Ready to automate your agency's communication?
+              Ready to automate your real estate communication?
             </h2>
             <ul className="space-y-3">
               {['24/7 Availability', 'Instant Property Details', 'Custom FAQ Training'].map((item) => (

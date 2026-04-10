@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../App';
-import { Building2, MessageSquare, Copy, Check, ExternalLink } from 'lucide-react';
-import { db, collection, query, where, onSnapshot } from '../../../firebase';
+import { Building2, MessageSquare, Copy, Check, ExternalLink, Settings } from 'lucide-react';
+import { db, collection, query, where, onSnapshot, doc } from '../../../firebase';
 import { cn } from '../../../shared/utils/utils';
 import { motion } from 'motion/react';
 import { LoadingScreen } from './LoadingScreen';
@@ -10,47 +10,61 @@ import { LoadingScreen } from './LoadingScreen';
 export function Overview() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    today: 0,
-    week: 0,
     month: 0,
+    forSale: 0,
+    sold: 0,
     listings: 0
   });
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
+
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', user.uid), (snapshot) => {
+      if (snapshot.exists()) {
+        setSettings(snapshot.data());
+      }
+    });
 
     const conversationsQuery = query(collection(db, 'conversations'), where('agentId', '==', user.uid));
     const propertiesQuery = query(collection(db, 'properties'), where('agentId', '==', user.uid));
 
     const unsubscribeConvs = onSnapshot(conversationsQuery, (snapshot) => {
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
 
-      let todayCount = 0;
-      let weekCount = 0;
       let monthCount = 0;
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         const date = new Date(data.createdAt || data.updatedAt);
-        if (date >= today) todayCount++;
-        if (date >= weekAgo) weekCount++;
         if (date >= monthAgo) monthCount++;
       });
 
-      setStats(prev => ({ ...prev, today: todayCount, week: weekCount, month: monthCount }));
+      setStats(prev => ({ ...prev, month: monthCount }));
       setLoading(false);
     });
 
     const unsubscribeProps = onSnapshot(propertiesQuery, (snapshot) => {
-      setStats(prev => ({ ...prev, listings: snapshot.size }));
+      let forSale = 0;
+      let sold = 0;
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'Sold') {
+          sold++;
+        } else if (data.status === 'For Sale' || !data.status) {
+          forSale++;
+        }
+      });
+
+      setStats(prev => ({ ...prev, listings: snapshot.size, forSale, sold }));
     });
 
     return () => {
+      unsubscribeSettings();
       unsubscribeConvs();
       unsubscribeProps();
     };
@@ -68,10 +82,10 @@ export function Overview() {
   if (loading) return <LoadingScreen />;
 
   const statCards = [
-    { title: 'Clients Today', value: stats.today, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { title: 'Clients This Week', value: stats.week, icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-    { title: 'Clients This Month', value: stats.month, icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    { title: 'Total Listings', value: stats.listings, icon: Building2, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    { title: 'Clients This Month', value: stats.month, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { title: 'Items for Sale', value: stats.forSale, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    { title: 'Items Sold', value: stats.sold, icon: Building2, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    { title: 'Total Listings', value: stats.listings, icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
   ];
 
   return (
@@ -105,8 +119,39 @@ export function Overview() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm"
+        className="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-8"
       >
+        {/* Chatbot Summary Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <img 
+                src={settings?.chatbotAvatarUrl || `https://ui-avatars.com/api/?name=${settings?.chatbotName || 'AI'}&background=0D8ABC&color=fff`} 
+                alt="Chatbot Avatar" 
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-50 dark:border-blue-900/30 shadow-sm"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
+            </div>
+            <div>
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                {settings?.chatbotName || 'EstateMind AI'}
+              </h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Managed by <span className="font-medium text-blue-600 dark:text-blue-400">{settings?.agencyName || user?.displayName || 'Agent'}</span>
+              </p>
+            </div>
+          </div>
+          
+          <Link 
+            to="/dashboard/settings" 
+            className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-all border border-gray-200 dark:border-gray-700"
+          >
+            <Settings className="w-4 h-4" />
+            Customize Chatbot
+          </Link>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
