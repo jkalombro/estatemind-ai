@@ -37,7 +37,6 @@
         "chatbotName": { "type": "string", "description": "The name of the AI chatbot." },
         "chatbotAvatarUrl": { "type": "string", "description": "The URL for the chatbot's profile picture." },
         "welcomeMessage": { "type": "string", "description": "The initial message from the chatbot." },
-        "agencyName": { "type": "string", "description": "The name of the agent or business." },
         "agentId": { "type": "string", "description": "The UID of the agent." }
       },
       "required": ["agentId"]

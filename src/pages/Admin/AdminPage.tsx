@@ -9,6 +9,8 @@ import { AgentCard } from './components/AgentCard';
 interface AgentStats {
   properties: number;
   conversations: number;
+  itemsForSale: number;
+  itemsSold: number;
 }
 
 export function Admin() {
@@ -37,11 +39,15 @@ export function Admin() {
       const newStats: Record<string, AgentStats> = {};
 
       propertiesSnap.docs.forEach(doc => {
-        const agentId = doc.data().agentId;
+        const data = doc.data();
+        const agentId = data.agentId;
         if (agentId) {
+          const current = newStats[agentId] || { properties: 0, conversations: 0, itemsForSale: 0, itemsSold: 0 };
           newStats[agentId] = {
-            ...(newStats[agentId] || { properties: 0, conversations: 0 }),
-            properties: (newStats[agentId]?.properties || 0) + 1
+            ...current,
+            properties: current.properties + 1,
+            itemsForSale: current.itemsForSale + (data.status === 'for-sale' ? 1 : 0),
+            itemsSold: current.itemsSold + (data.status === 'sold' ? 1 : 0)
           };
         }
       });
@@ -49,9 +55,10 @@ export function Admin() {
       conversationsSnap.docs.forEach(doc => {
         const agentId = doc.data().agentId;
         if (agentId) {
+          const current = newStats[agentId] || { properties: 0, conversations: 0, itemsForSale: 0, itemsSold: 0 };
           newStats[agentId] = {
-            ...(newStats[agentId] || { properties: 0, conversations: 0 }),
-            conversations: (newStats[agentId]?.conversations || 0) + 1
+            ...current,
+            conversations: current.conversations + 1
           };
         }
       });

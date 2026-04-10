@@ -14,6 +14,7 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
 }
 
 export function Chatbot() {
@@ -26,6 +27,7 @@ export function Chatbot() {
   const [properties, setProperties] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const [agentName, setAgentName] = useState('the agent');
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -84,6 +86,12 @@ export function Chatbot() {
           console.error("Agent settings not found for:", selectedAgent);
           setSettings(null);
         }
+
+        // Fetch agent name from users collection
+        const userSnap = await getDoc(doc(db, 'users', selectedAgent));
+        if (userSnap.exists()) {
+          setAgentName(userSnap.data().displayName || 'the agent');
+        }
       } catch (error) {
         console.error("Error fetching agent settings:", error);
       }
@@ -110,106 +118,127 @@ export function Chatbot() {
     }
   }, [messages, isTyping]);
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping || !selectedAgent) return;
 
-    let currentConvId = conversationId;
-
-    // Create new conversation session if it doesn't exist
-    if (!currentConvId) {
-      try {
-        const newConv = await addDoc(collection(db, 'conversations'), {
-          agentId: selectedAgent,
-          clientName: '',
-          contactInfo: '',
-          lastMessage: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-        currentConvId = newConv.id;
-        setConversationId(newConv.id);
-      } catch (error) {
-        console.error("Error creating conversation:", error);
-        return;
-      }
-    }
-
     const userText = input;
+    const userMessageId = Date.now().toString();
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: userMessageId,
       text: userText,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      status: 'sending'
     };
 
+    // Update UI immediately
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
-    // Save user message to Firestore
-    await addDoc(collection(db, 'messages'), {
-      conversationId: currentConvId,
-      agentId: selectedAgent,
-      text: userText,
-      sender: 'user',
-      createdAt: new Date().toISOString()
-    });
+    const currentConvId = conversationId;
+    const currentMessages = messages;
 
-    // Simple heuristic to detect name/contact info
-    if (userText.toLowerCase().includes('my name is') || userText.toLowerCase().includes('i am')) {
-      const name = userText.split(/is|am/i)[1]?.trim().split(' ')[0];
-      if (name) {
-        await updateDoc(doc(db, 'conversations', currentConvId), {
-          clientName: name,
+    // Defer heavy work to next tick to ensure UI update is painted immediately
+    setTimeout(async () => {
+      let activeConvId = currentConvId;
+      
+      try {
+        // Create new conversation session if it doesn't exist
+        if (!activeConvId) {
+          const newConv = await addDoc(collection(db, 'conversations'), {
+            agentId: selectedAgent,
+            clientName: '',
+            contactInfo: '',
+            lastMessage: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          activeConvId = newConv.id;
+          setConversationId(newConv.id);
+        }
+
+        // Save user message to Firestore
+        await addDoc(collection(db, 'messages'), {
+          conversationId: activeConvId,
+          agentId: selectedAgent,
+          text: userText,
+          sender: 'user',
+          createdAt: new Date().toISOString()
+        });
+
+        // Update local status to 'sent'
+        setMessages(prev => prev.map(m => m.id === userMessageId ? { ...m, status: 'sent' } : m));
+
+        // Simple heuristic to detect name/contact info
+        if (userText.toLowerCase().includes('my name is') || userText.toLowerCase().includes('i am')) {
+          const name = userText.split(/is|am/i)[1]?.trim().split(' ')[0];
+          if (name) {
+            await updateDoc(doc(db, 'conversations', activeConvId), {
+              clientName: name,
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+        
+        if (userText.includes('@') || /\d{10}/.test(userText)) {
+          await updateDoc(doc(db, 'conversations', activeConvId), {
+            contactInfo: userText,
+            updatedAt: new Date().toISOString()
+          });
+        }
+
+        // Calculate message count (only user messages)
+        const userMessages = currentMessages.filter(m => m.sender === 'user');
+        const userMessageCount = userMessages.length + 1;
+
+        // Format history for Gemini
+        const history = currentMessages.map(m => ({
+          role: m.sender === 'user' ? 'user' as const : 'model' as const,
+          parts: [{ text: m.text }]
+        }));
+
+        const response = await generateChatResponse(userText, properties, faqs, settings, agentName, userMessageCount, history);
+
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: response,
+          sender: 'bot',
+          timestamp: new Date(),
+          status: 'sent'
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+
+        // Save bot message to Firestore
+        await addDoc(collection(db, 'messages'), {
+          conversationId: activeConvId,
+          agentId: selectedAgent,
+          text: response,
+          sender: 'bot',
+          createdAt: new Date().toISOString()
+        });
+
+        // Update conversation last message
+        await updateDoc(doc(db, 'conversations', activeConvId), {
+          lastMessage: response,
           updatedAt: new Date().toISOString()
         });
+      } catch (error) {
+        console.error("Error processing message:", error);
+        setMessages(prev => prev.map(m => m.id === userMessageId ? { ...m, status: 'error' } : m));
+        setIsTyping(false);
       }
-    }
-    
-    if (userText.includes('@') || /\d{10}/.test(userText)) {
-      await updateDoc(doc(db, 'conversations', currentConvId), {
-        contactInfo: userText,
-        updatedAt: new Date().toISOString()
-      });
-    }
-
-    const response = await generateChatResponse(userText, properties, faqs, settings);
-
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      text: response,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, botMessage]);
-    setIsTyping(false);
-
-    // Save bot message to Firestore
-    await addDoc(collection(db, 'messages'), {
-      conversationId: currentConvId,
-      agentId: selectedAgent,
-      text: response,
-      sender: 'bot',
-      createdAt: new Date().toISOString()
-    });
-
-    // Update conversation last message
-    await updateDoc(doc(db, 'conversations', currentConvId), {
-      lastMessage: response,
-      updatedAt: new Date().toISOString()
-    });
+    }, 0);
   };
 
   useEffect(() => {
-    if (settings?.agencyName) {
-      document.title = `${settings.agencyName} - Chatbot`;
-    }
     return () => {
       document.title = 'AI Real Estate Chatbot';
     };
-  }, [settings]);
+  }, []);
 
   if (loading) {
     return (

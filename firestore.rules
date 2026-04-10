@@ -12,7 +12,7 @@ service cloud.firestore {
     // Fields: question, answer, agentId, createdAt
     //
     // Collection: settings
-    // Fields: chatbotName, welcomeMessage, agencyName (Business/Agent Name), agentId
+    // Fields: chatbotName, welcomeMessage, agentId
     //
     // ===============================================================
 

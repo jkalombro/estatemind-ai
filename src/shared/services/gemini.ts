@@ -6,7 +6,10 @@ export async function generateChatResponse(
   message: string, 
   properties: any[], 
   faqs: any[], 
-  settings: any
+  settings: any,
+  agentName: string,
+  messageCount: number,
+  history: { role: 'user' | 'model', parts: { text: string }[] }[] = []
 ) {
   const model = "gemini-3-flash-preview";
   
@@ -19,9 +22,11 @@ export async function generateChatResponse(
   ).join('\n\n');
 
   const systemInstruction = `
-    You are ${settings?.chatbotName || "EstateMind AI"}, a helpful real estate assistant for ${settings?.agencyName || "the agent"}.
+    You are ${settings?.chatbotName || "EstateMind AI"}, a helpful real estate assistant for the agent ${agentName}.
     Your goal is to answer questions about available properties and general real estate inquiries.
     
+    Current message count in this conversation: ${messageCount}.
+
     Here are the current property listings:
     ${propertiesContext}
     
@@ -32,7 +37,10 @@ export async function generateChatResponse(
     - Be professional, friendly, and helpful.
     - If a user asks about a property, provide details from the listings above.
     - **CRITICAL**: Do NOT use the dollar sign ($) when mentioning prices. Just provide the number (e.g., "1,200,000" instead of "$1,200,000").
-    - **CRITICAL**: After providing property details or answering a specific inquiry about a listing, you MUST politely ask for the user's name and contact information (email or phone) so the agent can follow up with them.
+    - **Lead Capture Logic**: 
+      - If you don't know the answer to a question (it's not in the properties or FAQs), politely explain that you'll need the agent to follow up, and ask for the user's name and contact information (email or phone).
+      - If the conversation has reached 3 or more messages (${messageCount} >= 3), and you haven't captured their contact info yet, politely ask for their name and contact details so ${agentName} can provide more personalized assistance.
+      - Otherwise, focus on answering their questions directly.
     - If you don't know the answer, suggest they contact the agent directly.
     - Use markdown for formatting (bolding, lists, etc.).
     - Keep responses concise but informative.
@@ -41,7 +49,10 @@ export async function generateChatResponse(
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: message,
+      contents: [
+        ...history,
+        { role: 'user', parts: [{ text: message }] }
+      ],
       config: {
         systemInstruction,
       },
