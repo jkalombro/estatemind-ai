@@ -4,6 +4,7 @@ import { useAuth } from './App';
 import { LogIn, LogOut, Home, Settings, MessageSquare, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { cn } from './shared/utils/utils';
 import { useTheme } from './shared/context/ThemeContext';
+import { APP_VERSION } from './constants';
 import logo from './assets/img/estatemind-ai.png';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -128,6 +129,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             © 2026 EstateMind AI. Empowering real estate agents with AI.
+          </p>
+          <p className="text-gray-400 dark:text-gray-600 text-[10px] mt-1 font-medium">
+            {APP_VERSION}
           </p>
         </div>
       </footer>

@@ -22,7 +22,7 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
       <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
         <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
           <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          Select Agency
+          Select Agent
         </h2>
         <div className="space-y-2 max-h-48 md:max-h-none overflow-y-auto pr-2">
           {agents.map((agent) => (
@@ -36,14 +36,14 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
                   : "bg-white dark:bg-gray-900 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
               )}
             >
-              {agent.agencyName || "Unnamed Agency"}
+              {agent.agencyName || "Unnamed Agent"}
               <div className="text-[10px] opacity-60 font-normal mt-0.5">
                 AI: {agent.chatbotName}
               </div>
             </button>
           ))}
           {agents.length === 0 && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 italic p-2">No active agencies found.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic p-2">No active agents found.</p>
           )}
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
           <h3 className="font-bold">AI Powered</h3>
         </div>
         <p className="text-sm text-blue-100 leading-relaxed">
-          Our AI is trained on real-time property data and agency FAQs to provide instant, accurate information.
+          Our AI is trained on real-time property data and agent FAQs to provide instant, accurate information.
         </p>
       </div>
     </div>

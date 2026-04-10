@@ -19,7 +19,7 @@ export async function generateChatResponse(
   ).join('\n\n');
 
   const systemInstruction = `
-    You are ${settings?.chatbotName || "EstateMind AI"}, a helpful real estate assistant for ${settings?.agencyName || "our agency"}.
+    You are ${settings?.chatbotName || "EstateMind AI"}, a helpful real estate assistant for ${settings?.agencyName || "the agent"}.
     Your goal is to answer questions about available properties and general real estate inquiries.
     
     Here are the current property listings:
