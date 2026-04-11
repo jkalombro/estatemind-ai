@@ -6,28 +6,34 @@ import { cn } from './shared/utils/utils';
 import { useTheme } from './shared/context/ThemeContext';
 import { APP_VERSION } from './constants';
 import logo from './assets/img/estatemind-ai.png';
+import { LoadingScreen } from './shared/components/LoadingScreen';
+import { AnimatePresence } from 'motion/react';
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, authAction, setAuthAction } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
+      setAuthAction('login');
       await signInWithPopup(auth, googleProvider);
       navigate('/dashboard');
     } catch (error) {
       console.error("Login failed:", error);
+      setAuthAction(null);
     }
   };
 
   const handleLogout = async () => {
     try {
+      setAuthAction('logout');
       await signOut(auth);
       navigate('/');
     } catch (error) {
       console.error("Logout failed:", error);
+      setAuthAction(null);
     }
   };
 
@@ -40,9 +46,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ...(isAdmin ? [{ name: 'Admin', path: '/admin', icon: Settings }] : []),
   ];
 
+  const isSharedChatbot = location.pathname === '/chatbot' && new URLSearchParams(location.search).has('agentId');
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col transition-colors duration-300">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
+      <AnimatePresence>
+        {authAction && <LoadingScreen type={authAction} />}
+      </AnimatePresence>
+      <header className={cn(
+        "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300",
+        isSharedChatbot ? "hidden md:block" : "block"
+      )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <Link to="/" className="flex items-center gap-2 group">
@@ -106,7 +120,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
               ) : (
-                !(location.pathname === '/chatbot' && new URLSearchParams(location.search).has('agentId')) && (
+                !isSharedChatbot && (
                   <button
                     onClick={handleLogin}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md active:scale-95"
@@ -121,11 +135,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className={cn(
+        "flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8",
+        isSharedChatbot ? "px-0 sm:px-6 py-0 sm:py-8" : ""
+      )}>
         {children}
       </main>
 
-      <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8 transition-colors duration-300">
+      <footer className={cn(
+        "bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8 transition-colors duration-300",
+        isSharedChatbot ? "hidden md:block" : "block"
+      )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             © 2026 EstateMind AI. Empowering real estate agents with AI.

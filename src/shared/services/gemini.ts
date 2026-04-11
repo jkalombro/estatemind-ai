@@ -58,9 +58,13 @@ export async function generateChatResponse(
       },
     });
 
-    return response.text || "I'm sorry, I couldn't generate a response right now.";
+    if (!response.text) {
+      throw new Error("No response text generated");
+    }
+
+    return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "I'm having trouble connecting to my brain. Please try again later!";
+    throw error;
   }
 }

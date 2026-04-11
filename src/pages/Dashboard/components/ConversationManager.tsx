@@ -22,7 +22,10 @@ export function ConversationManager() {
     if (!user) return;
     const q = query(collection(db, 'conversations'), where('agentId', '==', user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setConversations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const convs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort by updatedAt descending
+      convs.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      setConversations(convs);
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'conversations');
@@ -94,7 +97,7 @@ export function ConversationManager() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Conversations List */}
-        <div className="lg:col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           {conversations.map((conv, index) => (
             <div key={conv.id} className="relative group">
               <button
@@ -141,8 +144,8 @@ export function ConversationManager() {
           )}
         </div>
 
-        {/* Selected Conversation Detail */}
-        <div className="lg:col-span-2">
+        {/* Selected Conversation Detail - Side Panel for Desktop, Modal for Mobile */}
+        <div className="lg:col-span-2 hidden lg:block">
           {selectedConv ? (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col h-[600px] transition-colors">
               <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
@@ -152,12 +155,6 @@ export function ConversationManager() {
                   </h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{selectedConv.contactInfo || "No contact info provided"}</p>
                 </div>
-                <button 
-                  onClick={() => setSelectedConv(null)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 lg:hidden cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 dark:bg-gray-950/30">
                 {loadingMessages ? (
@@ -203,6 +200,65 @@ export function ConversationManager() {
           )}
         </div>
       </div>
+
+      {/* Mobile Modal for Selected Conversation */}
+      {selectedConv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:hidden">
+          <motion.div 
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-lg flex flex-col h-[80vh] overflow-hidden"
+          >
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+              <div>
+                <h2 className="font-bold text-gray-900 dark:text-white">
+                  {selectedConv.clientName || "Unknown Client"}
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedConv.contactInfo || "No contact info provided"}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedConv(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30 dark:bg-gray-950/30">
+              {loadingMessages ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                </div>
+              ) : messages.length > 0 ? (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "max-w-[85%] p-3 rounded-xl text-sm",
+                      msg.sender === 'user'
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 ml-auto rounded-tr-none"
+                        : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-none"
+                    )}
+                  >
+                    <div className="font-bold text-[10px] uppercase tracking-wider mb-1 opacity-50">
+                      {msg.sender === 'user' ? 'Client' : 'AI Assistant'}
+                    </div>
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-strong:font-bold">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                    <div className="text-[10px] mt-1 opacity-50 text-right">
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 italic">
+                  No messages in this conversation yet.
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deletingId && (

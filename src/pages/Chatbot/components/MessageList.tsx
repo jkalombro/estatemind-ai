@@ -22,7 +22,7 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
   return (
     <div 
       ref={scrollRef}
-      className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50 dark:bg-gray-950/50"
+      className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-gray-950/50"
     >
       <AnimatePresence initial={false}>
         {messages.map((msg) => (
@@ -31,16 +31,16 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             className={cn(
-              "flex gap-3 max-w-[85%]",
+              "flex gap-2.5 max-w-[90%] sm:max-w-[85%]",
               msg.sender === 'user' ? "ml-auto flex-row-reverse" : ""
             )}
           >
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm overflow-hidden",
+              "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm overflow-hidden",
               msg.sender === 'user' ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-gray-100 dark:border-gray-700"
             )}>
               {msg.sender === 'user' ? (
-                <User className="w-4 h-4" />
+                <User className="w-3.5 h-3.5" />
               ) : (
                 settings?.chatbotAvatarUrl ? (
                   <img 
@@ -50,12 +50,12 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <Bot className="w-4 h-4" />
+                  <Bot className="w-3.5 h-3.5" />
                 )
               )}
             </div>
             <div className={cn(
-              "p-4 rounded-2xl shadow-sm text-sm leading-relaxed",
+              "p-3 rounded-2xl shadow-sm text-sm leading-relaxed",
               msg.sender === 'user' 
                 ? "bg-blue-600 text-white rounded-tr-none" 
                 : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-none"
@@ -69,7 +69,7 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
                 </Markdown>
               </div>
               <div className={cn(
-                "text-[10px] mt-2 opacity-70 flex items-center gap-2",
+                "text-[10px] mt-1.5 opacity-70 flex items-center gap-2",
                 msg.sender === 'user' ? "justify-end" : ""
               )}>
                 <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -85,8 +85,8 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
         ))}
       </AnimatePresence>
       {isTyping && (
-        <div className="flex gap-3 max-w-[85%]">
-          <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-sm overflow-hidden">
+        <div className="flex gap-2.5 max-w-[90%] sm:max-w-[85%]">
+          <div className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-sm overflow-hidden">
             {settings?.chatbotAvatarUrl ? (
               <img 
                 src={settings.chatbotAvatarUrl} 
@@ -95,13 +95,13 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <Bot className="w-4 h-4" />
+              <Bot className="w-3.5 h-3.5" />
             )}
           </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm flex gap-1 items-center">
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm flex gap-1 items-center">
+            <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+            <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+            <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce"></span>
           </div>
         </div>
       )}
