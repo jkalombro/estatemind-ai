@@ -5,15 +5,17 @@ import { Building2, MessageSquare, ShieldCheck, ArrowRight, Sparkles, CheckCircl
 import { motion } from 'motion/react';
 
 export function Home() {
-  const { user } = useAuth();
+  const { user, setAuthAction } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
+      setAuthAction('login');
       await signInWithPopup(auth, googleProvider);
       navigate('/dashboard');
     } catch (error) {
       console.error("Login failed:", error);
+      setAuthAction(null);
     }
   };
 

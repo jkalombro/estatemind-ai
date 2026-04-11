@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { db, collection, getDocs, query, where, onSnapshot, doc, getDoc, addDoc, updateDoc } from '../../firebase';
 import { generateChatResponse } from '../../shared/services/gemini';
 import { Info, X } from 'lucide-react';
+import { cn } from '../../shared/utils/utils';
 
 import { AgentSelector } from './components/AgentSelector';
 import { ChatHeader } from './components/ChatHeader';
@@ -20,6 +21,7 @@ interface Message {
 export function Chatbot() {
   const [searchParams] = useSearchParams();
   const urlAgentId = searchParams.get('agentId');
+  const isSharedChatbot = !!urlAgentId;
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -33,7 +35,9 @@ export function Chatbot() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [agentNotFound, setAgentNotFound] = useState(false);
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isProcessing = useRef(false);
 
   // Fetch all agents who have set up the app
   useEffect(() => {
@@ -120,8 +124,9 @@ export function Chatbot() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isTyping || !selectedAgent) return;
+    if (!input.trim() || isTyping || !selectedAgent || isProcessing.current) return;
 
+    isProcessing.current = true;
     const userText = input;
     const userMessageId = Date.now().toString();
     const userMessage: Message = {
@@ -201,6 +206,9 @@ export function Chatbot() {
 
         const response = await generateChatResponse(userText, properties, faqs, settings, agentName, userMessageCount, history);
 
+        // Reset failures on success
+        setConsecutiveFailures(0);
+
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: response,
@@ -211,6 +219,7 @@ export function Chatbot() {
 
         setMessages(prev => [...prev, botMessage]);
         setIsTyping(false);
+        isProcessing.current = false;
 
         // Save bot message to Firestore
         await addDoc(collection(db, 'messages'), {
@@ -228,8 +237,31 @@ export function Chatbot() {
         });
       } catch (error) {
         console.error("Error processing message:", error);
-        setMessages(prev => prev.map(m => m.id === userMessageId ? { ...m, status: 'error' } : m));
+        
+        const newCount = consecutiveFailures + 1;
+        setConsecutiveFailures(newCount);
+        
+        // Determine error message based on failure count
+        let errorText = "I'm having trouble connecting to my brain. Can you try again in a few seconds? 😅";
+        if (newCount >= 3) {
+          errorText = "I still can't connect to my brain at the moment, but I'm trying my best. Sorry for being such a failure 😔";
+        }
+        
+        const botErrorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: errorText,
+          sender: 'bot',
+          timestamp: new Date(),
+          status: 'sent'
+        };
+
+        setMessages(prevMsgs => [
+          ...prevMsgs.map(m => m.id === userMessageId ? { ...m, status: 'sent' as const } : m),
+          botErrorMessage
+        ]);
+        
         setIsTyping(false);
+        isProcessing.current = false;
       }
     }, 0);
   };
@@ -249,7 +281,10 @@ export function Chatbot() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto h-[calc(100vh-12rem)] flex flex-col md:flex-row gap-6">
+    <div className={cn(
+      "max-w-5xl mx-auto flex flex-col md:flex-row gap-4 md:gap-6",
+      isSharedChatbot ? "h-screen md:h-[calc(100vh-12rem)]" : "h-[calc(100vh-12rem)]"
+    )}>
       {agentNotFound && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
           <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -264,15 +299,20 @@ export function Chatbot() {
           </button>
         </div>
       )}
-      <AgentSelector 
-        agents={agents} 
-        selectedAgent={selectedAgent} 
-        onSelectAgent={setSelectedAgent} 
-        urlAgentId={urlAgentId} 
-      />
+      {!isSharedChatbot && (
+        <AgentSelector 
+          agents={agents} 
+          selectedAgent={selectedAgent} 
+          onSelectAgent={setSelectedAgent} 
+          urlAgentId={urlAgentId} 
+        />
+      )}
 
       {/* Chat Interface */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl flex flex-col overflow-hidden relative transition-colors">
+      <div className={cn(
+        "flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl flex flex-col overflow-hidden relative transition-colors",
+        isSharedChatbot ? "rounded-none md:rounded-3xl border-none md:border" : "rounded-3xl"
+      )}>
         <ChatHeader settings={settings} />
         <MessageList 
           messages={messages} 

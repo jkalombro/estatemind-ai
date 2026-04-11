@@ -26,9 +26,19 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isBlocked: boolean;
+  authAction: 'login' | 'logout' | null;
+  setAuthAction: (action: 'login' | 'logout' | null) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true, isAdmin: false, isBlocked: false });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  profile: null, 
+  loading: true, 
+  isAdmin: false, 
+  isBlocked: false,
+  authAction: null,
+  setAuthAction: () => {}
+});
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -37,6 +47,7 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [blockedError, setBlockedError] = useState(false);
+  const [authAction, setAuthAction] = useState<'login' | 'logout' | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -79,14 +90,22 @@ export default function App() {
       }
       
       setLoading(false);
+      // Clear authAction once the auth state is fully resolved and profile is loaded
+      setAuthAction(null);
     });
     return unsubscribe;
   }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-blue-100 dark:border-blue-900/30"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 animate-spin"></div>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">Initializing EstateMind AI...</p>
+        </div>
       </div>
     );
   }
@@ -116,7 +135,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <AuthContext.Provider value={{ user, profile, loading, isAdmin, isBlocked }}>
+      <AuthContext.Provider value={{ user, profile, loading, isAdmin, isBlocked, authAction, setAuthAction }}>
         <Router>
           <Layout>
             <Routes>

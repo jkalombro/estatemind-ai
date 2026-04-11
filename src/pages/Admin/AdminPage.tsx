@@ -46,8 +46,8 @@ export function Admin() {
           newStats[agentId] = {
             ...current,
             properties: current.properties + 1,
-            itemsForSale: current.itemsForSale + (data.status === 'for-sale' ? 1 : 0),
-            itemsSold: current.itemsSold + (data.status === 'sold' ? 1 : 0)
+            itemsForSale: current.itemsForSale + (data.status === 'For Sale' || !data.status ? 1 : 0),
+            itemsSold: current.itemsSold + (data.status === 'Sold' ? 1 : 0)
           };
         }
       });

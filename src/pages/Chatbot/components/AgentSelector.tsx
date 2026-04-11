@@ -18,26 +18,26 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
   if (urlAgentId) return null;
 
   return (
-    <div className="w-full md:w-72 flex flex-col gap-4">
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+    <div className="w-full md:w-64 flex flex-col gap-3">
+      <div className="bg-white dark:bg-gray-900 p-3 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
+        <h2 className="text-[10px] font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           Select Agent
         </h2>
-        <div className="space-y-2 max-h-48 md:max-h-none overflow-y-auto pr-2">
+        <div className="space-y-1.5 max-h-40 md:max-h-none overflow-y-auto pr-1">
           {agents.map((agent) => (
             <button
               key={agent.id}
               onClick={() => onSelectAgent(agent.id)}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border cursor-pointer",
+                "w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all border cursor-pointer",
                 selectedAgent === agent.id
                   ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-sm"
                   : "bg-white dark:bg-gray-900 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
               )}
             >
               {agent.agencyName || "Unnamed Agent"}
-              <div className="text-[10px] opacity-60 font-normal mt-0.5">
+              <div className="text-[9px] opacity-60 font-normal mt-0.5">
                 AI: {agent.chatbotName}
               </div>
             </button>
@@ -48,12 +48,12 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
         </div>
       </div>
 
-      <div className="bg-blue-600 p-5 rounded-2xl text-white shadow-lg shadow-blue-100 dark:shadow-none hidden md:block">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5" />
-          <h3 className="font-bold">AI Powered</h3>
+      <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-100 dark:shadow-none hidden md:block">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="w-4 h-4" />
+          <h3 className="font-bold text-sm">AI Powered</h3>
         </div>
-        <p className="text-sm text-blue-100 leading-relaxed">
+        <p className="text-xs text-blue-100 leading-relaxed">
           Our AI is trained on real-time property data and agent FAQs to provide instant, accurate information.
         </p>
       </div>

@@ -37,40 +37,40 @@ export function AgentCard({ agent, stats, updatingId, onToggleBlock }: AgentCard
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 flex-1">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">
-            <MessageSquare className="w-3 h-3" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 md:ml-auto">
+        <div className="space-y-0.5 min-w-[60px]">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
+            <MessageSquare className="w-2.5 h-2.5" />
             Clients
           </div>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.conversations || 0}
           </p>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">
-            <Building2 className="w-3 h-3 text-blue-500" />
+        <div className="space-y-0.5 min-w-[60px]">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
+            <Building2 className="w-2.5 h-2.5 text-blue-500" />
             For Sale
           </div>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.itemsForSale || 0}
           </p>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+        <div className="space-y-0.5 min-w-[60px]">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
+            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
             Sold
           </div>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.itemsSold || 0}
           </p>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">
-            <Building2 className="w-3 h-3" />
-            Total Listings
+        <div className="space-y-0.5 min-w-[60px]">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
+            <Building2 className="w-2.5 h-2.5" />
+            Total
           </div>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.properties || 0}
           </p>
         </div>
