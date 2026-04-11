@@ -11,6 +11,7 @@ export function PropertyManager() {
   const [properties, setProperties] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -33,9 +34,7 @@ export function PropertyManager() {
     price: 0,
     location: '',
     type: 'House',
-    status: 'For Sale',
-    bedrooms: 0,
-    bathrooms: 0
+    status: 'For Sale'
   });
 
   useEffect(() => {
@@ -53,6 +52,7 @@ export function PropertyManager() {
     if (!user) return;
 
     try {
+      setIsSaving(true);
       if (editingId) {
         await updateDoc(doc(db, 'properties', editingId), formData);
         setEditingId(null);
@@ -64,9 +64,11 @@ export function PropertyManager() {
         });
       }
       setIsAdding(false);
-      setFormData({ title: '', description: '', price: 0, location: '', type: 'House', status: 'For Sale', bedrooms: 0, bathrooms: 0 });
+      setFormData({ title: '', description: '', price: 0, location: '', type: 'House', status: 'For Sale' });
     } catch (error) {
       console.error("Error saving property:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -130,9 +132,7 @@ export function PropertyManager() {
       price: property.price || 0,
       location: property.location || '',
       type: property.type || 'House',
-      status: property.status || 'For Sale',
-      bedrooms: property.bedrooms || 0,
-      bathrooms: property.bathrooms || 0
+      status: property.status || 'For Sale'
     });
     setIsAdding(true);
   };
@@ -189,120 +189,110 @@ export function PropertyManager() {
       </div>
 
       {isAdding && (
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm animate-in fade-in slide-in-from-top-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingId ? 'Edit Property' : 'New Property Listing'}</h2>
-            <button onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-              <X className="w-6 h-6" />
-            </button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+            {isSaving && (
+              <div className="absolute inset-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                <div className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Saving property...</p>
+              </div>
+            )}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingId ? 'Edit Property' : 'New Property Listing'}</h2>
+              <button onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Title</label>
+                <input
+                  required
+                  type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                  placeholder="Modern Villa with Pool"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
+                <input
+                  required
+                  type="number"
+                  value={formData.price === 0 ? '' : formData.price}
+                  onChange={e => setFormData({ ...formData, price: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                <input
+                  required
+                  type="text"
+                  value={formData.location}
+                  onChange={e => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                  placeholder="123 Luxury Ave, Beverly Hills, CA"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Type</label>
+                <select
+                  value={formData.type}
+                  onChange={e => setFormData({ ...formData, type: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                >
+                  <option>House</option>
+                  <option>Apartment</option>
+                  <option>Condo</option>
+                  <option>Land</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                >
+                  <option>For Sale</option>
+                  <option>Sold</option>
+                  <option>For Rent</option>
+                  <option>Rented</option>
+                </select>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                <textarea
+                  required
+                  rows={6}
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-colors"
+                  placeholder="Describe the property's key features... (Supports bullets and indentations)"
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  className="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {editingId ? 'Update Listing' : 'Save Listing'}
+                </button>
+              </div>
+            </form>
           </div>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Title</label>
-              <input
-                required
-                type="text"
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                placeholder="Modern Villa with Pool"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
-              <input
-                required
-                type="number"
-                value={formData.price}
-                onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-              <input
-                required
-                type="text"
-                value={formData.location}
-                onChange={e => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                placeholder="123 Luxury Ave, Beverly Hills, CA"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Type</label>
-              <select
-                value={formData.type}
-                onChange={e => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-              >
-                <option>House</option>
-                <option>Apartment</option>
-                <option>Condo</option>
-                <option>Land</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-              <select
-                value={formData.status}
-                onChange={e => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-              >
-                <option>For Sale</option>
-                <option>Sold</option>
-                <option>For Rent</option>
-                <option>Rented</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bedrooms</label>
-                <input
-                  type="number"
-                  value={formData.bedrooms}
-                  onChange={e => setFormData({ ...formData, bedrooms: Number(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bathrooms</label>
-                <input
-                  type="number"
-                  value={formData.bathrooms}
-                  onChange={e => setFormData({ ...formData, bathrooms: Number(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                />
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-              <textarea
-                required
-                rows={4}
-                value={formData.description}
-                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-colors"
-                placeholder="Describe the property's key features..."
-              />
-            </div>
-            <div className="md:col-span-2 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsAdding(false)}
-                className="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                {editingId ? 'Update Listing' : 'Save Listing'}
-              </button>
-            </div>
-          </form>
         </div>
       )}
 
@@ -342,11 +332,9 @@ export function PropertyManager() {
               )}>
                 {property.status || 'For Sale'}
               </span>
-              <span>{property.bedrooms} Beds</span>
-              <span>{property.bathrooms} Baths</span>
               <span className="text-blue-600 dark:text-blue-400 ml-auto font-bold">{property.price.toLocaleString()}</span>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed mb-4">
+            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 leading-relaxed mb-4 whitespace-pre-wrap">
               {property.description}
             </p>
             <div className="mt-auto">
