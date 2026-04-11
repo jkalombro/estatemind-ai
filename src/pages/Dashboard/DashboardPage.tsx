@@ -65,10 +65,10 @@ export function Dashboard() {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 p-6 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:inset-auto md:w-64 md:p-0 md:bg-transparent md:border-none",
+        "fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 p-6 transform transition-transform duration-300 ease-in-out md:sticky md:top-24 md:z-0 md:w-64 md:p-0 md:bg-transparent md:border-none md:translate-x-0 md:h-fit",
         isMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="md:p-4 md:bg-white md:dark:bg-gray-900 md:rounded-xl md:border md:border-gray-100 md:dark:border-gray-800 md:shadow-sm mb-6 transition-colors h-full md:h-auto">
+        <div className="md:p-4 md:bg-white md:dark:bg-gray-900 md:rounded-xl md:border md:border-gray-100 md:dark:border-gray-800 md:shadow-sm transition-colors h-full md:h-auto">
           <div className="flex items-center justify-between mb-8 md:mb-4 px-2">
             <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dashboard</h2>
             <button 
