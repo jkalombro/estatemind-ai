@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/assets/img/preview.png" alt="EstateMind AI Preview" width="800" />
+  <img src="https://res.cloudinary.com/dydhpzure/image/upload/v1775987049/properties/Fxrvg4qbYsZhJU6oO3AugIN27IX2/dvg2kvemst5xvsx7bu08.png" alt="EstateMind AI Preview" width="800" />
   <h1>EstateMind AI</h1>
   <p>AI-powered assistant platform for real estate agents — manage listings, FAQs, and let clients chat with your AI chatbot.</p>
 

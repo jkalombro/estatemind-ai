@@ -5,9 +5,10 @@ import { LogIn, LogOut, Home, Settings, MessageSquare, Sun, Moon, LayoutDashboar
 import { cn } from './shared/utils/utils';
 import { useTheme } from './shared/context/ThemeContext';
 import { APP_VERSION } from './constants';
-import logo from './assets/img/estatemind-ai.png';
 import { LoadingScreen } from './shared/components/LoadingScreen';
 import { AnimatePresence } from 'motion/react';
+
+const LOGO_URL = "https://res.cloudinary.com/dydhpzure/image/upload/v1775986949/properties/Fxrvg4qbYsZhJU6oO3AugIN27IX2/clv3gexv5jn9snzqguag.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, authAction, setAuthAction } = useAuth();
@@ -61,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between h-16 items-center">
             <Link to="/" className="flex items-center gap-2 group">
               <img 
-                src={logo} 
+                src={LOGO_URL} 
                 alt="EstateMind AI" 
                 className="w-10 h-10 rounded-lg object-contain" 
                 referrerPolicy="no-referrer"
