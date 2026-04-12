@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../App';
-import { Building2, MessageSquare, Settings, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Building2, MessageSquare, Settings, LayoutDashboard, Menu, X, Users } from 'lucide-react';
 import { cn } from '../../shared/utils/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -9,6 +9,7 @@ import { Overview } from './components/Overview';
 import { PropertyManager } from './components/PropertyManager';
 import { FAQManager } from './components/FAQManager';
 import { ConversationManager } from './components/ConversationManager';
+import { ClientsManager } from './components/ClientsManager';
 import { SettingsManager } from './components/SettingsManager';
 
 export function Dashboard() {
@@ -32,6 +33,7 @@ export function Dashboard() {
 
   const tabs = [
     { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Clients', path: '/dashboard/clients', icon: Users },
     { name: 'Properties', path: '/dashboard/properties', icon: Building2 },
     { name: 'FAQs', path: '/dashboard/faqs', icon: MessageSquare },
     { name: 'Conversations', path: '/dashboard/conversations', icon: MessageSquare },
@@ -105,6 +107,7 @@ export function Dashboard() {
           <Route path="/properties" element={<PropertyManager />} />
           <Route path="/faqs" element={<FAQManager />} />
           <Route path="/conversations" element={<ConversationManager />} />
+          <Route path="/clients" element={<ClientsManager />} />
           <Route path="/settings" element={<SettingsManager />} />
         </Routes>
       </div>

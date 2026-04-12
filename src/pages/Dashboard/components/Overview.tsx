@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../App';
-import { Building2, MessageSquare, Copy, Check, ExternalLink, Settings } from 'lucide-react';
+import { Building2, MessageSquare, Copy, Check, ExternalLink, Settings, Users } from 'lucide-react';
 import { db, collection, query, where, onSnapshot, doc } from '../../../firebase';
 import { cn } from '../../../shared/utils/utils';
 import { motion } from 'motion/react';
@@ -10,10 +10,10 @@ import { LoadingScreen } from './LoadingScreen';
 export function Overview() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    month: 0,
+    totalConversations: 0,
+    totalClients: 0,
     forSale: 0,
-    sold: 0,
-    listings: 0
+    sold: 0
   });
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -32,18 +32,13 @@ export function Overview() {
     const propertiesQuery = query(collection(db, 'properties'), where('agentId', '==', user.uid));
 
     const unsubscribeConvs = onSnapshot(conversationsQuery, (snapshot) => {
-      const now = new Date();
-      const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-
-      let monthCount = 0;
-
-      snapshot.docs.forEach(doc => {
+      const totalConversations = snapshot.size;
+      const totalClients = snapshot.docs.filter(doc => {
         const data = doc.data();
-        const date = new Date(data.createdAt || data.updatedAt);
-        if (date >= monthAgo) monthCount++;
-      });
+        return data.clientName || data.contactInfo;
+      }).length;
 
-      setStats(prev => ({ ...prev, month: monthCount }));
+      setStats(prev => ({ ...prev, totalConversations, totalClients }));
       setLoading(false);
     });
 
@@ -60,7 +55,7 @@ export function Overview() {
         }
       });
 
-      setStats(prev => ({ ...prev, listings: snapshot.size, forSale, sold }));
+      setStats(prev => ({ ...prev, forSale, sold }));
     });
 
     return () => {
@@ -82,10 +77,10 @@ export function Overview() {
   if (loading) return <LoadingScreen />;
 
   const statCards = [
-    { title: 'Clients This Month', value: stats.month, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { title: 'Items for Sale', value: stats.forSale, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    { title: 'Items Sold', value: stats.sold, icon: Building2, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    { title: 'Total Listings', value: stats.listings, icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { title: 'Total Conversations', value: stats.totalConversations, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', path: '/dashboard/conversations' },
+    { title: 'Clients', value: stats.totalClients, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', path: '/dashboard/clients' },
+    { title: 'Items for Sale', value: stats.forSale, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', path: '/dashboard/properties' },
+    { title: 'Total Sold', value: stats.sold, icon: Building2, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20', path: '/dashboard/properties' },
   ];
 
   return (
@@ -97,21 +92,22 @@ export function Overview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card, i) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group"
-          >
-            <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.bg)}>
-              <card.icon className={cn("w-6 h-6", card.color)} />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
-              <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">{card.value}</p>
-            </div>
-          </motion.div>
+          <Link key={card.title} to={card.path}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all group h-full"
+            >
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.bg)}>
+                <card.icon className={cn("w-6 h-6", card.color)} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
+                <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">{card.value}</p>
+              </div>
+            </motion.div>
+          </Link>
         ))}
       </div>
 

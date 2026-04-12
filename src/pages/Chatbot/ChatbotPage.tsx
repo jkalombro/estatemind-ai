@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { db, collection, getDocs, query, where, onSnapshot, doc, getDoc, addDoc, updateDoc } from '../../firebase';
 import { generateChatResponse } from '../../shared/services/gemini';
-import { Info, X } from 'lucide-react';
+import { Info, X, Loader2 } from 'lucide-react';
 import { cn } from '../../shared/utils/utils';
 
 import { AgentSelector } from './components/AgentSelector';
 import { ChatHeader } from './components/ChatHeader';
 import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Message {
   id: string;
@@ -36,6 +37,9 @@ export function Chatbot() {
   const [loading, setLoading] = useState(true);
   const [agentNotFound, setAgentNotFound] = useState(false);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactFormData, setContactFormData] = useState({ name: '', contact: '' });
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isProcessing = useRef(false);
 
@@ -43,9 +47,21 @@ export function Chatbot() {
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const q = query(collection(db, 'settings'));
-        const snapshot = await getDocs(q);
-        const agentList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Fetch all settings to know who has configured their chatbot
+        // We only fetch settings because users collection is protected (PII)
+        const settingsQuery = query(collection(db, 'settings'));
+        const settingsSnapshot = await getDocs(settingsQuery);
+        
+        const agentList = settingsSnapshot.docs.map(doc => {
+          const settingsData = doc.data();
+          return {
+            id: doc.id,
+            ...settingsData,
+            displayName: settingsData.agentName || settingsData.agencyName || 'Unnamed Agent',
+            photoURL: settingsData.agentPhoto || settingsData.chatbotAvatarUrl
+          };
+        });
+
         setAgents(agentList);
         
         // If agentId is in URL, prioritize it
@@ -80,6 +96,7 @@ export function Chatbot() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setSettings(data);
+          setAgentName(data.agentName || data.agencyName || 'the agent');
           setMessages([{
             id: 'welcome',
             text: data.welcomeMessage || "Hello! How can I help you today?",
@@ -89,12 +106,6 @@ export function Chatbot() {
         } else {
           console.error("Agent settings not found for:", selectedAgent);
           setSettings(null);
-        }
-
-        // Fetch agent name from users collection
-        const userSnap = await getDoc(doc(db, 'users', selectedAgent));
-        if (userSnap.exists()) {
-          setAgentName(userSnap.data().displayName || 'the agent');
         }
       } catch (error) {
         console.error("Error fetching agent settings:", error);
@@ -272,6 +283,46 @@ export function Chatbot() {
     };
   }, []);
 
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactFormData.name || !contactFormData.contact || !conversationId) return;
+
+    setIsSubmittingContact(true);
+    try {
+      await updateDoc(doc(db, 'conversations', conversationId), {
+        clientName: contactFormData.name,
+        contactInfo: contactFormData.contact,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Add a system message or bot confirmation
+      const botMessage: Message = {
+        id: Date.now().toString(),
+        text: `Thank you, ${contactFormData.name}! I've saved your contact information (${contactFormData.contact}). ${agentName} will get in touch with you soon.`,
+        sender: 'bot',
+        timestamp: new Date(),
+        status: 'sent'
+      };
+      setMessages(prev => [...prev, botMessage]);
+      
+      // Save to Firestore
+      await addDoc(collection(db, 'messages'), {
+        conversationId,
+        agentId: selectedAgent,
+        text: botMessage.text,
+        sender: 'bot',
+        createdAt: new Date().toISOString()
+      });
+
+      setShowContactForm(false);
+      setContactFormData({ name: '', contact: '' });
+    } catch (error) {
+      console.error("Error saving contact info:", error);
+    } finally {
+      setIsSubmittingContact(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
@@ -320,6 +371,7 @@ export function Chatbot() {
           settings={settings} 
           scrollRef={scrollRef} 
           properties={properties}
+          onShowContactForm={() => setShowContactForm(true)}
         />
         <ChatInput 
           input={input} 
@@ -328,6 +380,65 @@ export function Chatbot() {
           disabled={isTyping || !selectedAgent} 
         />
       </div>
+
+      {/* Contact Form Modal */}
+      <AnimatePresence>
+        {showContactForm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Provide Contact Info</h3>
+                <button onClick={() => setShowContactForm(false)} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Full Name</label>
+                  <input
+                    required
+                    type="text"
+                    value={contactFormData.name}
+                    onChange={(e) => setContactFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter your name"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Contact Info (Email or Mobile)</label>
+                  <input
+                    required
+                    type="text"
+                    value={contactFormData.contact}
+                    onChange={(e) => setContactFormData(prev => ({ ...prev, contact: e.target.value }))}
+                    placeholder="email@example.com or 09123456789"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmittingContact}
+                  className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingContact ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Submit Information'
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

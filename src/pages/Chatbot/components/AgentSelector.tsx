@@ -1,10 +1,12 @@
-import { Building2, Sparkles } from 'lucide-react';
+import { Building2, Sparkles, User } from 'lucide-react';
 import { cn } from '../../../shared/utils/utils';
 
 interface Agent {
   id: string;
   agencyName?: string;
   chatbotName?: string;
+  displayName?: string;
+  photoURL?: string;
 }
 
 interface AgentSelectorProps {
@@ -30,15 +32,26 @@ export function AgentSelector({ agents, selectedAgent, onSelectAgent, urlAgentId
               key={agent.id}
               onClick={() => onSelectAgent(agent.id)}
               className={cn(
-                "w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all border cursor-pointer",
+                "w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all border cursor-pointer flex items-center gap-3",
                 selectedAgent === agent.id
                   ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-sm"
                   : "bg-white dark:bg-gray-900 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
               )}
             >
-              {agent.agencyName || "Unnamed Agent"}
-              <div className="text-[9px] opacity-60 font-normal mt-0.5">
-                AI: {agent.chatbotName}
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 border border-gray-200 dark:border-gray-700">
+                {agent.photoURL ? (
+                  <img src={agent.photoURL} alt={agent.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold truncate">{agent.displayName || agent.agencyName || "Unnamed Agent"}</div>
+                <div className="text-[9px] opacity-60 font-normal mt-0.5 truncate">
+                  AI: {agent.chatbotName || "Assistant"}
+                </div>
               </div>
             </button>
           ))}

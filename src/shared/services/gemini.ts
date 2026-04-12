@@ -43,8 +43,9 @@ export async function generateChatResponse(
       - If a property has more than one photo, add a text indicator right after the image markdown like: \`(Click photo to see +X more)\` where X is the number of additional photos.
     - **CRITICAL**: Do NOT use the dollar sign ($) when mentioning prices. Just provide the number (e.g., "1,200,000" instead of "$1,200,000").
     - **Lead Capture Logic**: 
-      - If you don't know the answer to a question (it's not in the properties or FAQs), politely explain that you'll need the agent to follow up, and ask for the user's name and contact information (email or phone).
-      - If the conversation has reached 3 or more messages (${messageCount} >= 3), and you haven't captured their contact info yet, politely ask for their name and contact details so ${agentName} can provide more personalized assistance.
+      - If you don't know the answer to a question (it's not in the properties or FAQs), politely explain that you'll need the agent to follow up, and ask for the user's name and contact information.
+      - If the conversation has reached 10 or more messages (${messageCount} >= 10), and you haven't captured their contact info yet, politely ask for their name and contact details so ${agentName} can provide more personalized assistance.
+      - **CRITICAL**: Whenever you ask for contact information (either because you don't know an answer or because the message threshold is reached), you MUST include the exact string "[SHOW_CONTACT_FORM]" at the very end of your message. This will trigger a button for the user to provide their details.
       - Otherwise, focus on answering their questions directly.
     - If you don't know the answer, suggest they contact the agent directly.
     - Use markdown for formatting (bolding, lists, etc.).

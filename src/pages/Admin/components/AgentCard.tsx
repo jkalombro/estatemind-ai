@@ -1,4 +1,5 @@
-import { Building2, MessageSquare, Ban, CheckCircle2, Loader2 } from 'lucide-react';
+import { Building2, MessageSquare, Ban, CheckCircle2, Loader2, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { cn } from '../../../shared/utils/utils';
 
@@ -37,43 +38,43 @@ export function AgentCard({ agent, stats, updatingId, onToggleBlock }: AgentCard
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 md:ml-auto">
-        <div className="space-y-0.5 min-w-[60px]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4 md:ml-auto">
+        <Link to="/dashboard/conversations" className="space-y-0.5 min-w-[80px] group/stat hover:opacity-80 transition-opacity">
           <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
-            <MessageSquare className="w-2.5 h-2.5" />
-            Clients
+            <MessageSquare className="w-2.5 h-2.5 text-blue-500" />
+            Total Conversations
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.conversations || 0}
           </p>
-        </div>
-        <div className="space-y-0.5 min-w-[60px]">
+        </Link>
+        <Link to="/dashboard/clients" className="space-y-0.5 min-w-[80px] group/stat hover:opacity-80 transition-opacity">
           <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
-            <Building2 className="w-2.5 h-2.5 text-blue-500" />
-            For Sale
+            <Users className="w-2.5 h-2.5 text-purple-500" />
+            Clients
+          </div>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
+            {stats?.clients || 0}
+          </p>
+        </Link>
+        <Link to="/dashboard/properties" className="space-y-0.5 min-w-[80px] group/stat hover:opacity-80 transition-opacity">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
+            <Building2 className="w-2.5 h-2.5 text-emerald-500" />
+            Items for Sale
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.itemsForSale || 0}
           </p>
-        </div>
-        <div className="space-y-0.5 min-w-[60px]">
+        </Link>
+        <Link to="/dashboard/properties" className="space-y-0.5 min-w-[80px] group/stat hover:opacity-80 transition-opacity">
           <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
-            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
-            Sold
+            <Building2 className="w-2.5 h-2.5 text-orange-500" />
+            Total Sold
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
             {stats?.itemsSold || 0}
           </p>
-        </div>
-        <div className="space-y-0.5 min-w-[60px]">
-          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider">
-            <Building2 className="w-2.5 h-2.5" />
-            Total
-          </div>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
-            {stats?.properties || 0}
-          </p>
-        </div>
+        </Link>
       </div>
 
       <div className="flex items-center gap-3">
