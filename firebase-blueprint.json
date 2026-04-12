@@ -10,8 +10,11 @@
         "price": { "type": "number", "description": "The price of the property." },
         "location": { "type": "string", "description": "The location/address of the property." },
         "type": { "type": "string", "enum": ["House", "Apartment", "Condo", "Land"], "description": "The type of property." },
-        "bedrooms": { "type": "number", "description": "Number of bedrooms." },
-        "bathrooms": { "type": "number", "description": "Number of bathrooms." },
+        "images": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of URLs for property photos." 
+        },
         "agentId": { "type": "string", "description": "The UID of the agent who owns this listing." },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the listing was created." }
       },

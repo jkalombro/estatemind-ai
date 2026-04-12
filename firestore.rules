@@ -6,7 +6,7 @@ service cloud.firestore {
     // ===============================================================
     //
     // Collection: properties
-    // Fields: title, description, price, location, type, bedrooms, bathrooms, agentId, createdAt
+    // Fields: title, description, price, location, type, images, agentId, createdAt
     //
     // Collection: faqs
     // Fields: question, answer, agentId, createdAt
@@ -49,6 +49,7 @@ service cloud.firestore {
       return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.price is number && data.price >= 0 &&
              data.location is string && data.location.size() > 0 &&
+             (!('images' in data) || data.images is list) &&
              (data.agentId == request.auth.uid || isAdmin());
     }
 
