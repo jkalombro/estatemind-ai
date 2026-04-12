@@ -1,20 +1,67 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <img src="src/assets/img/preview.png" alt="EstateMind AI Preview" width="800" />
+  <h1>EstateMind AI</h1>
+  <p>AI-powered assistant platform for real estate agents — manage listings, FAQs, and let clients chat with your AI chatbot.</p>
+
+  [![Live Demo](https://img.shields.io/badge/Live%20Demo-estatemind--ai.netlify.app-blue?style=for-the-badge)](https://estatemind-ai.netlify.app/)
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## Overview
 
-View your app in AI Studio: https://ai.studio/apps/75e1d22d-0360-4dbc-9d0f-972c56621313
+EstateMind AI is a full-stack web application that gives real estate agents their own AI-powered chatbot. Agents log in to manage their property listings and FAQs, which the AI uses as context to answer client questions in real time.
 
-## Run Locally
+Clients access a public chatbot page — no account needed — and can get instant, accurate answers about properties, pricing, and more, all powered by Google Gemini.
 
-**Prerequisites:**  Node.js
+## Features
 
+- **Agent Dashboard** — manage properties, FAQs, chatbot settings, and view conversation history
+- **AI Chatbot** — public-facing chatbot backed by Google Gemini, trained on the agent's listings and FAQs
+- **Google Sign-In** — Firebase Authentication with role-based access (`agent` / `admin`)
+- **Real-time Updates** — Firestore `onSnapshot` keeps the dashboard live without refreshing
+- **Dark Mode** — fully themed UI with persistent dark/light toggle
+- **Admin Panel** — manage all agents and platform-wide settings
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TypeScript, Vite 6, Tailwind CSS v4 |
+| Routing | React Router v7 |
+| Auth & DB | Firebase 11 (Google Auth + Firestore) |
+| AI | Google Gemini (`@google/genai`) |
+| Hosting | Netlify |
+
+## Getting Started
+
+**Prerequisites:** Node.js
+
+1. Clone the repo and install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Set your Gemini API key in `.env.local`:
+   ```
+   GEMINI_API_KEY=your_key_here
+   ```
+
+3. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+   App runs at `http://localhost:3000`
+
+## Scripts
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run lint     # Type-check (tsc --noEmit)
+npm run clean    # Remove dist/
+```
+
+## Live Demo
+
+[https://estatemind-ai.netlify.app/](https://estatemind-ai.netlify.app/)
