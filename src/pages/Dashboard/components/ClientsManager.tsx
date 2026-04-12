@@ -83,7 +83,8 @@ export function ClientsManager() {
       // 1. Delete all messages for this conversation
       const messagesQuery = query(
         collection(db, 'messages'),
-        where('conversationId', '==', deletingClientId)
+        where('conversationId', '==', deletingClientId),
+        where('agentId', '==', user.uid)
       );
       const messagesSnapshot = await getDocs(messagesQuery);
       

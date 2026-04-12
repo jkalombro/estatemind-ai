@@ -136,7 +136,7 @@ export function MessageList({ messages, isTyping, settings, scrollRef, propertie
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                   <button
                     onClick={() => onShowContactForm?.()}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <User className="w-4 h-4" />
                     Click here to provide your contact info

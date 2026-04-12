@@ -423,7 +423,7 @@ export function Chatbot() {
                 <button
                   type="submit"
                   disabled={isSubmittingContact}
-                  className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmittingContact ? (
                     <>
