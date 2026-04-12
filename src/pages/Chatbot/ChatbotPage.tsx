@@ -319,6 +319,7 @@ export function Chatbot() {
           isTyping={isTyping} 
           settings={settings} 
           scrollRef={scrollRef} 
+          properties={properties}
         />
         <ChatInput 
           input={input} 

@@ -1,4 +1,5 @@
-import { User, Bot } from 'lucide-react';
+import { useState } from 'react';
+import { User, Bot, X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { cn } from '../../../shared/utils/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,9 +17,39 @@ interface MessageListProps {
   isTyping: boolean;
   settings: any;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  properties: any[];
 }
 
-export function MessageList({ messages, isTyping, settings, scrollRef }: MessageListProps) {
+export function MessageList({ messages, isTyping, settings, scrollRef, properties }: MessageListProps) {
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [zoom, setZoom] = useState(1);
+
+  const openCarousel = (property: any) => {
+    setSelectedProperty(property);
+    setCurrentImageIndex(0);
+    setZoom(1);
+  };
+
+  const closeCarousel = () => {
+    setSelectedProperty(null);
+    setZoom(1);
+  };
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!selectedProperty) return;
+    setCurrentImageIndex((prev) => (prev + 1) % selectedProperty.images.length);
+    setZoom(1);
+  };
+
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!selectedProperty) return;
+    setCurrentImageIndex((prev) => (prev - 1 + selectedProperty.images.length) % selectedProperty.images.length);
+    setZoom(1);
+  };
+
   return (
     <div 
       ref={scrollRef}
@@ -66,14 +97,34 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
               )}>
                 <Markdown
                   components={{
-                    img: ({ node, ...props }) => (
-                      <img
-                        {...props}
-                        className="max-w-full h-auto rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
-                        referrerPolicy="no-referrer"
-                        loading="lazy"
-                      />
-                    ),
+                    img: ({ node, alt, src, ...props }) => {
+                      const property = properties.find(p => p.title === alt);
+                      const moreCount = property?.images?.length > 1 ? property.images.length - 1 : 0;
+
+                      return (
+                        <div 
+                          className="relative group cursor-pointer inline-block"
+                          onClick={() => property && openCarousel(property)}
+                        >
+                          <img
+                            {...props}
+                            src={src}
+                            alt={alt}
+                            className="max-w-full h-auto rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm transition-transform group-hover:scale-[1.02]"
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
+                          />
+                          {moreCount > 0 && (
+                            <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30 flex items-center gap-2">
+                                <Maximize2 className="w-4 h-4 text-white" />
+                                <span className="text-white font-bold text-xs">+{moreCount} more</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    },
                   }}
                 >
                   {msg.text}
@@ -94,6 +145,114 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
             </div>
           </motion.div>
         ))}
+      </AnimatePresence>
+
+      {/* Photo Carousel Modal */}
+      <AnimatePresence>
+        {selectedProperty && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col"
+            onClick={closeCarousel}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 md:p-6">
+              <div className="text-white">
+                <h3 className="font-bold text-lg">{selectedProperty.title}</h3>
+                <p className="text-sm text-gray-400">{selectedProperty.location}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-white/10 rounded-lg p-1 mr-4">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(1, z - 0.5)); }}
+                    className="p-2 hover:bg-white/10 rounded-md text-white transition-colors"
+                  >
+                    <ZoomOut className="w-5 h-5" />
+                  </button>
+                  <span className="text-white text-xs font-bold px-2 w-12 text-center">{Math.round(zoom * 100)}%</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(3, z + 0.5)); }}
+                    className="p-2 hover:bg-white/10 rounded-md text-white transition-colors"
+                  >
+                    <ZoomIn className="w-5 h-5" />
+                  </button>
+                </div>
+                <button 
+                  onClick={closeCarousel}
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main View */}
+            <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentImageIndex}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: zoom,
+                    transition: { type: 'spring', damping: 25, stiffness: 200 }
+                  }}
+                  exit={{ opacity: 0, scale: 1.1 }}
+                  className="relative w-full h-full flex items-center justify-center p-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img 
+                    src={selectedProperty.images[currentImageIndex]} 
+                    alt={`${selectedProperty.title} - ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    referrerPolicy="no-referrer"
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Navigation */}
+              {selectedProperty.images.length > 1 && (
+                <>
+                  <button 
+                    onClick={prevImage}
+                    className="absolute left-4 md:left-8 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all active:scale-90"
+                  >
+                    <ChevronLeft className="w-8 h-8" />
+                  </button>
+                  <button 
+                    onClick={nextImage}
+                    className="absolute right-4 md:right-8 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all active:scale-90"
+                  >
+                    <ChevronRight className="w-8 h-8" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails / Counter */}
+            <div className="p-6 flex flex-col items-center gap-4">
+              <div className="text-white/60 text-sm font-medium">
+                Image {currentImageIndex + 1} of {selectedProperty.images.length}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 max-w-full px-4">
+                {selectedProperty.images.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); setZoom(1); }}
+                    className={cn(
+                      "w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shrink-0",
+                      idx === currentImageIndex ? "border-blue-500 scale-110" : "border-transparent opacity-50 hover:opacity-100"
+                    )}
+                  >
+                    <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       {isTyping && (
         <div className="flex gap-2.5 max-w-[90%] sm:max-w-[85%]">
