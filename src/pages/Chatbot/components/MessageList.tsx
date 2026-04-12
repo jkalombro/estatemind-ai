@@ -61,10 +61,21 @@ export function MessageList({ messages, isTyping, settings, scrollRef }: Message
                 : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-tl-none"
             )}>
               <div className={cn(
-                "prose prose-sm max-w-none prose-headings:text-inherit prose-p:leading-relaxed prose-strong:text-inherit",
+                "prose prose-sm max-w-none prose-headings:text-inherit prose-p:leading-relaxed prose-strong:text-inherit prose-img:rounded-xl prose-img:shadow-md prose-img:my-2",
                 msg.sender === 'user' ? "prose-invert" : "dark:prose-invert"
               )}>
-                <Markdown>
+                <Markdown
+                  components={{
+                    img: ({ node, ...props }) => (
+                      <img
+                        {...props}
+                        className="max-w-full h-auto rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                      />
+                    ),
+                  }}
+                >
                   {msg.text}
                 </Markdown>
               </div>

@@ -14,7 +14,7 @@ export async function generateChatResponse(
   const model = "gemini-3-flash-preview";
   
   const propertiesContext = properties.map(p => 
-    `Property: ${p.title}\nLocation: ${p.location}\nPrice: ${p.price}\nType: ${p.type}\nBedrooms: ${p.bedrooms}\nBathrooms: ${p.bathrooms}\nDescription: ${p.description}`
+    `Property: ${p.title}\nLocation: ${p.location}\nPrice: ${p.price}\nType: ${p.type}\nImages: ${p.images?.join(', ') || 'No photos available'}\nDescription: ${p.description}`
   ).join('\n\n');
 
   const faqsContext = faqs.map(f => 
@@ -36,6 +36,7 @@ export async function generateChatResponse(
     Guidelines:
     - Be professional, friendly, and helpful.
     - If a user asks about a property, provide details from the listings above.
+    - **Images**: If a property has images, you can include the first one in your response using markdown format: \`![Property Image](url)\`. This will help the user visualize the property.
     - **CRITICAL**: Do NOT use the dollar sign ($) when mentioning prices. Just provide the number (e.g., "1,200,000" instead of "$1,200,000").
     - **Lead Capture Logic**: 
       - If you don't know the answer to a question (it's not in the properties or FAQs), politely explain that you'll need the agent to follow up, and ask for the user's name and contact information (email or phone).

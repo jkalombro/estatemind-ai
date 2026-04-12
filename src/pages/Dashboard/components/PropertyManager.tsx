@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../App';
-import { Building2, Plus, Trash2, Edit, Save, X, Search } from 'lucide-react';
+import { Building2, Plus, Trash2, Edit, Save, X, Search, Image as ImageIcon, ImagePlus, Loader2 } from 'lucide-react';
 import { db, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from '../../../firebase';
 import { LoadingScreen } from './LoadingScreen';
 import { cn } from '../../../shared/utils/utils';
@@ -34,8 +34,10 @@ export function PropertyManager() {
     price: 0,
     location: '',
     type: 'House',
-    status: 'For Sale'
+    status: 'For Sale',
+    images: [] as string[]
   });
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +48,60 @@ export function PropertyManager() {
     });
     return unsubscribe;
   }, [user]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      console.error("Cloudinary configuration missing. Please set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your environment variables.");
+      alert("Cloudinary configuration is missing. Please check the settings.");
+      return;
+    }
+
+    setUploadingImages(true);
+    const newImages = [...formData.images];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('upload_preset', uploadPreset);
+        uploadData.append('folder', `properties/${user.uid}`);
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: 'POST',
+            body: uploadData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image to Cloudinary');
+        }
+
+        const data = await response.json();
+        newImages.push(data.secure_url);
+      }
+      setFormData({ ...formData, images: newImages });
+    } catch (error) {
+      console.error("Error uploading images to Cloudinary:", error);
+      alert("Failed to upload images. Please try again.");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +120,7 @@ export function PropertyManager() {
         });
       }
       setIsAdding(false);
-      setFormData({ title: '', description: '', price: 0, location: '', type: 'House', status: 'For Sale' });
+      setFormData({ title: '', description: '', price: 0, location: '', type: 'House', status: 'For Sale', images: [] });
     } catch (error) {
       console.error("Error saving property:", error);
     } finally {
@@ -132,7 +188,8 @@ export function PropertyManager() {
       price: property.price || 0,
       location: property.location || '',
       type: property.type || 'House',
-      status: property.status || 'For Sale'
+      status: property.status || 'For Sale',
+      images: property.images || []
     });
     setIsAdding(true);
   };
@@ -264,6 +321,42 @@ export function PropertyManager() {
                 </select>
               </div>
               <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Photos</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {formData.images.map((url, index) => (
+                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 group">
+                      <img src={url} alt="Property" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center gap-2 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all cursor-pointer">
+                    {uploadingImages ? (
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                    ) : (
+                      <>
+                        <ImagePlus className="w-6 h-6 text-gray-400" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Add Photos</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImages}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                 <textarea
                   required
@@ -298,61 +391,91 @@ export function PropertyManager() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredProperties.map((property) => (
-          <div key={property.id} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group flex flex-col">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{property.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <Building2 className="w-3 h-3" />
-                  {property.location}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(property)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all cursor-pointer"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(property.id)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-              <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{property.type}</span>
-              <span className={cn(
-                "px-2 py-1 rounded text-xs font-bold uppercase tracking-wider",
-                property.status === 'Sold' || property.status === 'Rented' 
-                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              )}>
-                {property.status || 'For Sale'}
-              </span>
-              <span className="text-blue-600 dark:text-blue-400 ml-auto font-bold">{property.price.toLocaleString()}</span>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 leading-relaxed mb-4 whitespace-pre-wrap">
-              {property.description}
-            </p>
-            <div className="mt-auto">
-              {property.status !== 'Sold' ? (
-                <button
-                  onClick={() => handleMarkAsSold(property.id)}
-                  className="w-full py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer"
-                >
-                  Mark as Sold
-                </button>
+          <div key={property.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group overflow-hidden flex flex-col">
+            {/* Property Image Preview */}
+            <div className="aspect-video w-full bg-gray-100 dark:bg-gray-800 relative overflow-hidden">
+              {property.images && property.images.length > 0 ? (
+                <img 
+                  src={property.images[0]} 
+                  alt={property.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
               ) : (
-                <button
-                  onClick={() => handleMarkAsForSale(property.id)}
-                  className="w-full py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all cursor-pointer"
-                >
-                  Mark as For Sale
-                </button>
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                  <ImageIcon className="w-8 h-8 opacity-20" />
+                  <span className="text-xs font-bold uppercase tracking-widest opacity-20">No Photos</span>
+                </div>
               )}
+              <div className="absolute top-3 left-3 flex gap-2">
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
+                  property.status === 'Sold' || property.status === 'Rented' 
+                    ? "bg-red-500 text-white"
+                    : "bg-emerald-500 text-white"
+                )}>
+                  {property.status || 'For Sale'}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-gray-900/90 text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white shadow-sm backdrop-blur-sm">
+                  {property.type}
+                </span>
+              </div>
+              {property.images && property.images.length > 1 && (
+                <div className="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white">
+                  +{property.images.length - 1} more
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 flex flex-col flex-1">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{property.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    {property.location}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(property)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(property.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                <span className="text-blue-600 dark:text-blue-400 font-black text-lg">
+                  {property.price.toLocaleString()}
+                </span>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed mb-6 whitespace-pre-wrap">
+                {property.description}
+              </p>
+              <div className="mt-auto">
+                {property.status !== 'Sold' ? (
+                  <button
+                    onClick={() => handleMarkAsSold(property.id)}
+                    className="w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 transition-all cursor-pointer"
+                  >
+                    Mark as Sold
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleMarkAsForSale(property.id)}
+                    className="w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all cursor-pointer"
+                  >
+                    Mark as For Sale
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
